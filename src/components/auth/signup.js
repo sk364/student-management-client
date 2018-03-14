@@ -6,13 +6,14 @@ import { Button, FormGroup, FormControl, ControlLabel, PageHeader } from "react-
 import { fetchWithHeaders } from '../../helper';
 import './login.css';
 
-class Login extends Component {
+class SignUp extends Component {
   constructor(props) {
     super(props);
     this.state = {
       username: '',
       password: '',
-      loginError: ''
+      confirmPassword: '',
+      signUpError: ''
     };
   }
 
@@ -22,28 +23,24 @@ class Login extends Component {
    * @param `password` Password of the user
    *
    */
-  submitLoginForm = (event) => {
+  submitSignUpForm = (event) => {
     event.preventDefault();
 
     var formData = JSON.stringify({
       'username': this.state.username,
-      'password': this.state.password
+      'password': this.state.password,
+      'confirm_password': this.state.confirmPassword
     });
 
-    fetchWithHeaders('/login/', 'POST', null, formData).then((response) => {
-      if (response.token) {
-        WebStorage.setItem('_jwt', response.token);
-        WebStorage.setItem('isUserLoggedIn', true);
-        WebStorage.setItem('isAdmin', response.is_admin);
-        WebStorage.setItem('userId', response.user_id);
-        Config.update('isUserLoggedIn', true);
-        Config.update('isAdmin', response.is_admin);
-        Config.update('userId', response.user_id);
-        this.props.history.push('/');
+    fetchWithHeaders('/signup/', 'POST', null, formData).then((response) => {
+      if (response.success) {
+        alert(response.message);
+        this.props.history.push(response.redirect_url);
       } else {
         this.setState({
           password: '',
-          loginError: response.non_field_errors
+          confirmPassword: '',
+          signUpError: response.message
         });
       }
     });
@@ -64,14 +61,14 @@ class Login extends Component {
    *
    */
   validateForm = () => {
-    return this.state.username.length > 0 && this.state.password.length > 0;
+    return this.state.username.length > 0 && this.state.password.length >= 8 && this.state.confirmPassword.length >= 8;
   }
 
   render = () => {
     return(
       <div className="Login">
-        <center><PageHeader>Login</PageHeader></center>
-        <form onSubmit={this.submitLoginForm}>
+        <center><PageHeader>Sign Up</PageHeader></center>
+        <form onSubmit={this.submitSignUpForm}>
           <FormGroup controlId="username" bsSize="large">
             <ControlLabel>Username</ControlLabel>
             <FormControl
@@ -89,22 +86,30 @@ class Login extends Component {
               type="password"
             />
           </FormGroup>
+          <FormGroup controlId="confirmPassword" bsSize="large">
+            <ControlLabel>Confirm Password</ControlLabel>
+            <FormControl
+              value={this.state.confirmPassword}
+              onChange={this.handleChange}
+              type="password"
+            />
+          </FormGroup>
           <Button
             bsSize="sm"
             bsStyle="primary"
             disabled={!this.validateForm()}
             type="submit"
           >
-            Login
+            Sign Up
           </Button>
 
-          <Link to="/signup" className="btn btn-sm btn-default pull-right">Sign Up</Link>
+          <Link to="/login" className="btn btn-sm btn-default pull-right">Login</Link>
         </form>
 
-        <div className="login-error">{ this.state.loginError }</div>
+        <div className="login-error">{ this.state.signUpError }</div>
       </div>
     );
   }
 }
 
-export default Login;
+export default SignUp;
