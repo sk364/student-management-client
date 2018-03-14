@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import Config from 'react-global-configuration';
+import NavHeader from './header';
 
 class App extends Component {
   constructor(props) {
@@ -32,7 +33,12 @@ class App extends Component {
   }
 
   render() {
-    return <div>{this.props.children}</div>;
+    return(
+      <div>
+        <NavHeader />
+        {this.props.children}
+      </div>
+    );
   }
 }
 
