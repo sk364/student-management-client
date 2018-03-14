@@ -76,7 +76,6 @@ class Courses extends Component {
   }
 
   render = () => {
-    const userId = Config.get('userId');
     const coursesListGroupItems = this.state.courses.map((course, index) => {
       return(
         <CourseItem key={index} course={course} enrollCourse={this.enrollCourse} leaveCourse={this.leaveCourse} />        

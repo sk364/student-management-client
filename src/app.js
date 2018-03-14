@@ -29,7 +29,7 @@ class App extends Component {
    *
    */
   checkIfLoginPageURL(url) {
-    return url.indexOf('login') !== -1;
+    return url.indexOf('login') !== -1 || url.indexOf('signup') !== -1;
   }
 
   render() {

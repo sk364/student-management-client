@@ -10,6 +10,7 @@ import Home from './components/home';
 import Courses from './components/courses';
 import Login from './components/auth/login';
 import Logout from './components/auth/logout';
+import SignUp from './components/auth/signup';
 import Error404 from './components/error404';
 
 import './config';
@@ -29,6 +30,9 @@ ReactDOM.render(
         <Route exact
                path="/login(/?)"
                component={Login} />
+        <Route exact
+               path="/signup(/?)"
+               component={SignUp} />
         <Route exact
                path="/logout(/?)"
                component={Logout} />
