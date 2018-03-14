@@ -7,6 +7,7 @@ import Config from 'react-global-configuration';
 import App from './app.js';
 
 import Home from './components/home';
+import Courses from './components/courses';
 import Login from './components/auth/login';
 import Logout from './components/auth/logout';
 import Error404 from './components/error404';
@@ -22,6 +23,9 @@ ReactDOM.render(
         <Route exact
                path="/"
                component={Home} />
+        <Route exact
+               path="/courses"
+               component={Courses} />
         <Route exact
                path="/login(/?)"
                component={Login} />

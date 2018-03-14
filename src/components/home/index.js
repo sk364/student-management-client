@@ -9,10 +9,8 @@ class Home extends Component {
     };
 
     return (
-      <div>
-        <div style={contentStyle}>
-          Welcome to Student Management Application!
-        </div>
+      <div style={contentStyle}>
+        Welcome to Student Management Application!
       </div>
     );
   }

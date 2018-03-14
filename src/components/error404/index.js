@@ -1,12 +1,16 @@
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
 
 class Error404 extends Component {
   render() {
+    const contentStyle = {
+      fontSize: '20px',
+      textAlign: 'center',
+      marginTop: '200px'
+    };
+
     return(
-      <div>
+      <div style={contentStyle}>
         Sorry, the page you are looking for doesnt exist.
-        Go back to <Link to='/'>Home</Link>
       </div>
     );
   }

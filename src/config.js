@@ -1,7 +1,7 @@
 import Config from 'react-global-configuration';
 import WebStorage from './webstorage';
 
-const _jwt = WebStorage.getItem('jwt'),
+const _jwt = WebStorage.getItem('_jwt'),
   requestHeaders = _jwt ? {'Authorization': 'JWT ' + _jwt} : {},
   isUserLoggedIn = WebStorage.getItem('isUserLoggedIn') === 'true',
   isAdmin = WebStorage.getItem('isAdmin') === 'true',
