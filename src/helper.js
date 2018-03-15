@@ -46,6 +46,9 @@ export var fetchWithHeaders = (url, method='GET', requestHeaders=null, formData=
   ).then(function(response) {
     return response;
   }).then(function(response) {
-    return response.json();
+    if (response.statusText !== 'No Content') {
+      return response.json();
+    }
+    return null;
   });
 }
