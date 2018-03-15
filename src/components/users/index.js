@@ -3,6 +3,7 @@ import Config from 'react-global-configuration';
 import {fetchWithHeaders} from '../../helper';
 import {Button, Glyphicon, ListGroup, ListGroupItem, Tooltip, OverlayTrigger, Modal} from 'react-bootstrap';
 import './index.css';
+import Error404 from '../error404';
 
 class Users extends Component {
   constructor(props) {
@@ -33,15 +34,19 @@ class Users extends Component {
   }
 
   componentWillMount = () => {
-    if (!this.props.users) {
-      this.fetchUsers();
-    } else {
-      this.setState({users: this.props.users});
+    const isAdmin = Config.get('isAdmin');
+    if (isAdmin) {
+      if (!this.props.users) {
+        this.fetchUsers();
+      } else {
+        this.setState({users: this.props.users});
+      }
     }
   }
 
   render = () => {
     const userId = Config.get('userId');
+    const isAdmin = Config.get('isAdmin');
     var userBlocks = this.state.users.map((user, index) => {
       return (
         <UserBlock
@@ -58,11 +63,17 @@ class Users extends Component {
 
     return(
       <div>
-        <ListGroup>
-          { userBlocks }
-        </ListGroup>
+        {
+          isAdmin ?
+          <div>
+            <ListGroup>
+              { userBlocks }
+            </ListGroup>
 
-        { userBlocks.length === 0 && <center><strong>Damn! No one except you.</strong></center> }
+            { userBlocks.length === 0 && <center><strong>Damn! No one except you.</strong></center> }
+          </div> :
+          <Error404 />
+        }
       </div>
     );
   }
