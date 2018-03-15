@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
 import {Link} from 'react-router-dom';
-import WebStorage from '../../webstorage';
-import Config from 'react-global-configuration';
 import { Button, FormGroup, FormControl, ControlLabel, PageHeader } from "react-bootstrap";
 import { fetchWithHeaders } from '../../helper';
 import './login.css';
