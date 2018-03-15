@@ -10,6 +10,8 @@ class SignUp extends Component {
     this.state = {
       username: '',
       password: '',
+      firstName: '',
+      lastName: '',
       confirmPassword: '',
       signUpError: ''
     };
@@ -27,6 +29,8 @@ class SignUp extends Component {
     var formData = JSON.stringify({
       'username': this.state.username,
       'password': this.state.password,
+      'first_name': this.state.firstName,
+      'last_name': this.state.lastName,
       'confirm_password': this.state.confirmPassword
     });
 
@@ -59,7 +63,13 @@ class SignUp extends Component {
    *
    */
   validateForm = () => {
-    return this.state.username.length > 0 && this.state.password.length >= 8 && this.state.confirmPassword.length >= 8;
+    return (
+      this.state.username.length > 0 &&
+      this.state.firstName.length > 0 &&
+      this.state.lastName.length > 0 &&
+      this.state.password.length >= 8 &&
+      this.state.confirmPassword.length >= 8
+    );
   }
 
   render = () => {
@@ -73,6 +83,22 @@ class SignUp extends Component {
               autoFocus
               type="text"
               value={this.state.username}
+              onChange={this.handleChange}
+            />
+          </FormGroup>
+          <FormGroup controlId="firstName" bsSize="large">
+            <ControlLabel>First Name</ControlLabel>
+            <FormControl
+              type="text"
+              value={this.state.firstName}
+              onChange={this.handleChange}
+            />
+          </FormGroup>
+          <FormGroup controlId="lastName" bsSize="large">
+            <ControlLabel>Last Name</ControlLabel>
+            <FormControl
+              type="text"
+              value={this.state.lastName}
               onChange={this.handleChange}
             />
           </FormGroup>
