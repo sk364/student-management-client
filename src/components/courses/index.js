@@ -40,20 +40,7 @@ class Courses extends Component {
   enrollCourse = (courseId) => {
     fetchWithHeaders('/courses/' + courseId + '/enroll/', 'PUT', null, {}).then((response) => {
       if (response.success) {
-        var courses = this.state.courses;
-        var _courses = [];
-
-        for(var course of courses) {
-          course = Object.assign({}, course);
-          if (course.id === courseId) {
-            course.users = response.users;
-            course.is_available = response.is_available;
-            course.is_enrolled = true;
-          }
-          _courses.push(course);
-        }
-
-        this.setState({courses: _courses});
+        this.updateCourseUsers(courseId, response.users, response.is_available, true);
       } else {
         alert(response.message);
       }
@@ -66,31 +53,15 @@ class Courses extends Component {
    */
   leaveCourse = (courseId, userId=null) => {
     var formData = {};
-    var _userId = Config.get('userId');
 
     if (userId !== null) {
-      formData['user_ids'] = [userId];
-    } else {
-      userId = parseInt(_userId, 10);
+      formData = {'user_ids': [userId]};
+      formData = JSON.stringify(formData);
     }
 
-    fetchWithHeaders('/courses/' + courseId + '/leave/', 'PUT', null, JSON.stringify(formData)).then((response) => {
+    fetchWithHeaders('/courses/' + courseId + '/leave/', 'PUT', null, formData).then((response) => {
       if (response.success) {
-        var courses = this.state.courses;
-        var _courses = [];
-
-        for (var course of courses) {
-          course = Object.assign({}, course);
-          if (course.id === courseId) {
-            const courseUsers = course.users.filter((user) => { return user.id !== userId });
-            course.users = courseUsers;
-            course.is_available = true;
-            course.is_enrolled = false;
-          }
-          _courses.push(course);
-        }
-
-        this.setState({ courses: _courses });
+        this.updateCourseUsers(courseId, response.users, true, false);
       } else {
         alert(response.message);
       }
@@ -102,15 +73,17 @@ class Courses extends Component {
    * @param `courseId` Course ID
    * @param `users` Updated users list
    * @param `isAvailable` Is Course Available?
+   * @param `isEnrolled` Is User Enrolled?
    *
    */
-  updateCourseUsers = (courseId, users, isAvailable) => {
+  updateCourseUsers = (courseId, users, isAvailable, isEnrolled) => {
     var courses = this.state.courses.slice();
 
     for (var course of courses) {
       if (course.id === courseId) {
         course.users = users;
         course.is_available = isAvailable;
+        course.is_enrolled = isEnrolled;
         break;
       }
     }
@@ -120,7 +93,9 @@ class Courses extends Component {
 
   componentWillMount = () => {
     this.fetchCourses();
-    this.fetchUsers();
+    if (Config.get('isAdmin')) {
+      this.fetchUsers();
+    }
   }
 
   /**
@@ -163,6 +138,7 @@ class CourseItem extends Component {
     this.state = {
       course: null,
       courseUsers: [],
+      showStudentsModal: false,
       showDeleteCourseWarning: false,
       addUserModal: false,
       selectedUsers: [],
@@ -182,8 +158,8 @@ class CourseItem extends Component {
    * @param `courseUsers` list of users enrolled in course
    *
    */
-  toggleStudentsModal = (courseUsers) => {
-    this.setState({courseUsers: courseUsers});
+  toggleStudentsModal = () => {
+    this.setState({showStudentsModal: !this.state.showStudentsModal});
   }
 
   /**
@@ -230,8 +206,6 @@ class CourseItem extends Component {
    *
    */
   removeUserFromCourse = (courseId, userId) => {
-    var courseUsers = this.state.courseUsers.filter((user) => { return user.id !== userId });
-    this.setState({ courseUsers: courseUsers });
     this.props.leaveCourse(courseId, userId);
   }
 
@@ -255,13 +229,15 @@ class CourseItem extends Component {
 
   componentWillReceiveProps = (nextProps) => {
     this.setState({
-      course: nextProps.course
+      course: nextProps.course,
+      courseUsers: nextProps.course.users
     });
   }
 
   componentWillMount = () => {
     this.setState({
-      course: this.props.course
+      course: this.props.course,
+      courseUsers: this.props.course.users
     });
   }
 
@@ -314,7 +290,7 @@ class CourseItem extends Component {
               bsSize="sm"
               className="pull-right"
               style={actionBtnStyle}
-              onClick={this.props.leaveCourse.bind(this, course.id)}>
+              onClick={this.props.leaveCourse.bind(this, course.id, null)}>
               Leave
             </Button>
           ) : (
@@ -365,7 +341,7 @@ class CourseItem extends Component {
                 </Modal.Footer>
               </Modal>
 
-              <Modal show={courseUsers.length !== 0} onHide={this.toggleStudentsModal.bind(this, [])}>
+              <Modal show={this.state.showStudentsModal} onHide={this.toggleStudentsModal}>
                 <Modal.Header closeButton>Students List</Modal.Header>
                 <Modal.Body>
                   <Users
@@ -374,7 +350,7 @@ class CourseItem extends Component {
                     courseId={course.id} />
                 </Modal.Body>
                 <Modal.Footer>
-                  <Button bsStyle="default" onClick={this.toggleStudentsModal.bind(this, [])}>
+                  <Button bsStyle="default" onClick={this.toggleStudentsModal}>
                     Close
                   </Button>
                 </Modal.Footer>
