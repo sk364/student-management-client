@@ -1,14 +1,15 @@
 import React, {Component} from 'react';
 import Config from 'react-global-configuration';
 import {fetchWithHeaders} from '../../helper';
-import { Button, ListGroup, ListGroupItem, Glyphicon, Modal } from 'react-bootstrap';
+import { Button, ListGroup, ListGroupItem, Glyphicon, Modal, Checkbox, FormGroup, ControlLabel } from 'react-bootstrap';
 import Users from '../users';
 
 class Courses extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      courses: []
+      courses: [],
+      users: []
     };
   }
 
@@ -23,24 +24,36 @@ class Courses extends Component {
   }
 
   /**
+   * @desc Get all users
+   *
+   */
+  fetchUsers = () => {
+    fetchWithHeaders('/students/').then((response) => {
+      this.setState({users: response});
+    });
+  }
+
+  /**
    * @desc Enroll a course with {courseId}
    *
    */
   enrollCourse = (courseId) => {
     fetchWithHeaders('/courses/' + courseId + '/enroll/', 'PUT', null, {}).then((response) => {
       if (response.success) {
-        var courses = this.state.courses.slice();
+        var courses = this.state.courses;
+        var _courses = [];
 
         for(var course of courses) {
+          course = Object.assign({}, course);
           if (course.id === courseId) {
             course.users = response.users;
             course.is_available = response.is_available;
             course.is_enrolled = true;
-            break;
           }
+          _courses.push(course);
         }
 
-        this.setState({courses: courses});
+        this.setState({courses: _courses});
       } else {
         alert(response.message);
       }
@@ -56,34 +69,58 @@ class Courses extends Component {
     var _userId = Config.get('userId');
 
     if (userId !== null) {
-      formData['user_id'] = userId;
+      formData['user_ids'] = [userId];
     } else {
       userId = parseInt(_userId, 10);
     }
 
     fetchWithHeaders('/courses/' + courseId + '/leave/', 'PUT', null, JSON.stringify(formData)).then((response) => {
       if (response.success) {
-        var courses = this.state.courses.slice();
+        var courses = this.state.courses;
+        var _courses = [];
 
         for (var course of courses) {
+          course = Object.assign({}, course);
           if (course.id === courseId) {
             const courseUsers = course.users.filter((user) => { return user.id !== userId });
             course.users = courseUsers;
             course.is_available = true;
             course.is_enrolled = false;
-            break;
           }
+          _courses.push(course);
         }
 
-        this.setState({ courses: courses });
+        this.setState({ courses: _courses });
       } else {
         alert(response.message);
       }
     });
   }
 
+  /**
+   * @desc Updates users in course with {courseId}
+   * @param `courseId` Course ID
+   * @param `users` Updated users list
+   * @param `isAvailable` Is Course Available?
+   *
+   */
+  updateCourseUsers = (courseId, users, isAvailable) => {
+    var courses = this.state.courses.slice();
+
+    for (var course of courses) {
+      if (course.id === courseId) {
+        course.users = users;
+        course.is_available = isAvailable;
+        break;
+      }
+    }
+
+    this.setState({courses: courses});
+  }
+
   componentWillMount = () => {
     this.fetchCourses();
+    this.fetchUsers();
   }
 
   /**
@@ -98,7 +135,14 @@ class Courses extends Component {
   render = () => {
     const coursesListGroupItems = this.state.courses.map((course, index) => {
       return(
-        <CourseItem key={index} course={course} enrollCourse={this.enrollCourse} leaveCourse={this.leaveCourse} removeCourse={this.removeCourse} />
+        <CourseItem
+          key={index}
+          course={course}
+          enrollCourse={this.enrollCourse}
+          leaveCourse={this.leaveCourse}
+          removeCourse={this.removeCourse}
+          users={this.state.users}
+          updateCourseUsers={this.updateCourseUsers} />
       );
     });
 
@@ -117,9 +161,11 @@ class CourseItem extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      course: null,
       courseUsers: [],
       showDeleteCourseWarning: false,
       addUserModal: false,
+      selectedUsers: [],
     };
   }
 
@@ -169,7 +215,12 @@ class CourseItem extends Component {
    *
    */
   addUsersToCourse = (courseId) => {
-
+    const formData = JSON.stringify({user_ids: this.state.selectedUsers});
+    fetchWithHeaders('/courses/' + courseId + '/enroll/', 'PUT', null, formData).then((response) => {
+      this.toggleAddUserModal();
+      this.props.updateCourseUsers(courseId, response.users, response.is_available);
+      this.setState({selectedUsers: []});
+    });
   }
 
   /**
@@ -184,10 +235,63 @@ class CourseItem extends Component {
     this.props.leaveCourse(courseId, userId);
   }
 
+  /**
+   * @desc Handles student checkbox change
+   *
+   */
+  handleStudentCheckboxChange = (event) => {
+    const userId = event.target.value;
+    const isChecked = event.target.checked;
+    var selectedUsers = this.state.selectedUsers;
+
+    if (isChecked) {
+      selectedUsers.push(userId);
+    } else {
+      selectedUsers.splice(selectedUsers.indexOf(userId), 1);
+    }
+
+    this.setState({ selectedUsers: selectedUsers });
+  }
+
+  componentWillReceiveProps = (nextProps) => {
+    this.setState({
+      course: nextProps.course
+    });
+  }
+
+  componentWillMount = () => {
+    this.setState({
+      course: this.props.course
+    });
+  }
+
   render = () => {
-    const course = this.props.course;
+    const course = this.state.course;
     const isAdmin = Config.get('isAdmin');
     const actionBtnStyle = { margin: '-5px 2px' };
+    const users = this.props.users.filter((user) => {
+      for(var courseUser of course.users) {
+        if (user.id === courseUser.id) {
+          return false;
+        }
+      }
+      return true;
+    });
+    const courseUsers = this.state.courseUsers;
+    const selectedUsers = this.state.selectedUsers;
+    const checkboxDisabled = (selectedUsers.length + course.users.length) > 4;
+    const usersCheckboxList = users.map((user, index) => {
+      return (
+        <Checkbox
+          key={user.id}
+          title={user.id.toString()}
+          value={user.id}
+          onChange={this.handleStudentCheckboxChange}
+          disabled={checkboxDisabled}>
+          { user.first_name + ' ' + user.last_name }
+        </Checkbox>
+      );
+    })
 
     return(
       <ListGroupItem>
@@ -243,21 +347,29 @@ class CourseItem extends Component {
               </Button>
 
               <Modal show={this.state.addUserModal} onHide={this.toggleAddUserModal}>
-                <Modal.Header closeButton>Add User</Modal.Header>
+                <Modal.Header closeButton>Add Student</Modal.Header>
                 <Modal.Body>
-
+                  <FormGroup controlId="users">
+                    <ControlLabel>Students</ControlLabel>
+                    { usersCheckboxList }
+                  </FormGroup>
                 </Modal.Body>
                 <Modal.Footer>
                   <Button onClick={this.toggleAddUserModal}>Close</Button>
-                  <Button bsStyle="primary" onClick={this.addUsersToCourse.bind(this, course.id)}>Save</Button>
+                  <Button
+                    bsStyle="primary"
+                    disabled={this.state.selectedUsers.length === 0}
+                    onClick={this.addUsersToCourse.bind(this, course.id)}>
+                    Save
+                  </Button>
                 </Modal.Footer>
               </Modal>
 
-              <Modal show={this.state.courseUsers.length !== 0} onHide={this.toggleStudentsModal.bind(this, [])}>
+              <Modal show={courseUsers.length !== 0} onHide={this.toggleStudentsModal.bind(this, [])}>
                 <Modal.Header closeButton>Students List</Modal.Header>
                 <Modal.Body>
                   <Users
-                    users={this.state.courseUsers}
+                    users={courseUsers}
                     removeUserFromCourse={this.removeUserFromCourse}
                     courseId={course.id} />
                 </Modal.Body>
