@@ -33,7 +33,7 @@ class Users extends Component {
   }
 
   componentWillMount = () => {
-    if (this.props.users.length === 0) {
+    if (!this.props.users) {
       this.fetchUsers();
     } else {
       this.setState({users: this.props.users});
