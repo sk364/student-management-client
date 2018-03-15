@@ -28,19 +28,28 @@ class Users extends Component {
    *
    */
   removeUser = (userId) => {
-    var _users = this.state.users.filter((user) => { return user.id !== userId });
-    this.setState({users: _users});
+    var users = this.state.users.filter((user) => { return user.id !== userId });
+    this.setState({users: users});
   }
 
   componentWillMount = () => {
-    this.fetchUsers();
+    if (this.props.users.length === 0) {
+      this.fetchUsers();
+    } else {
+      this.setState({users: this.props.users});
+    }
   }
 
   render = () => {
     const userId = Config.get('userId');
     var userBlocks = this.state.users.map((user, index) => {
       return (
-        <UserBlock key={user.id} user={user} removeUser={this.removeUser} />
+        <UserBlock
+          key={user.id}
+          user={user}
+          removeUser={this.removeUser}
+          removeUserFromCourse={this.props.removeUserFromCourse}
+          courseId={this.props.courseId} />
       );
     });
 
@@ -95,9 +104,11 @@ class UserBlock extends Component {
     const user = this.props.user;
     const deleteUserTooltip = (
       <Tooltip id="tooltip">
-        <strong>Delete</strong> user
+        { "Delete user" + (this.props.removeUserFromCourse ? " from course?" : "?" ) }
       </Tooltip>
     );
+    const removeUserFromCourse = this.props.removeUserFromCourse
+    const removeUser = removeUserFromCourse || this.removeUser;
 
     return(
       <ListGroupItem>
@@ -108,13 +119,22 @@ class UserBlock extends Component {
             bsSize="sm"
             className="pull-right"
             bsStyle="danger"
-            onClick={this.removeUser.bind(this, user.id)}>
+            onClick={
+              (event) => {
+                if (removeUserFromCourse) {
+                  this.props.removeUser(user.id);
+                  removeUser(this.props.courseId, user.id);
+                } else {
+                  removeUser(user.id);
+                }
+              }
+            }>
             <Glyphicon glyph="trash" />
           </Button>
         </OverlayTrigger>
         { this.state.showDeleteWarning &&
           <Modal.Dialog>
-            <Modal.Header>
+            <Modal.Header closeButton>
               Confirm Delete?
             </Modal.Header>
             <Modal.Body>
