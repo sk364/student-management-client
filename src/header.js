@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import Config from 'react-global-configuration';
 import {Link} from 'react-router-dom';
 import { Button, Nav, NavItem, Navbar, NavDropdown, MenuItem, Modal, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import {fetchWithHeaders} from './helper';
@@ -24,6 +25,8 @@ class NavHeader extends Component {
   }
 
   render = () => {
+    const isAdmin = Config.get('isAdmin');
+
     return(
       <div className="Header">
         <Navbar inverse collapseOnSelect fixedTop>
@@ -39,6 +42,12 @@ class NavHeader extends Component {
                 Courses
               </NavItem>
             </Nav>
+            {
+              isAdmin &&
+              <Nav>
+                <NavItem eventKey={1} href="/users">Users</NavItem>
+              </Nav>
+            }
             <Nav pullRight>
               <NavItem eventKey={1} onClick={this.toggleChangePasswordModal}>
                 Change Password

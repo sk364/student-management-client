@@ -8,6 +8,7 @@ import App from './app.js';
 
 import Home from './components/home';
 import Courses from './components/courses';
+import Users from './components/users';
 import Login from './components/auth/login';
 import Logout from './components/auth/logout';
 import SignUp from './components/auth/signup';
@@ -27,6 +28,9 @@ ReactDOM.render(
         <Route exact
                path="/courses"
                component={Courses} />
+        <Route exact
+               path="/users"
+               component={Users} />
         <Route exact
                path="/login(/?)"
                component={Login} />
