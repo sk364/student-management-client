@@ -10,7 +10,7 @@ const _jwt = WebStorage.getItem('_jwt'),
 requestHeaders['Content-Type'] = 'application/json';
 
 Config.set({
-  server: 'http://localhost:8000',
+  server: 'http://18.219.224.92:8000',
   isUserLoggedIn: isUserLoggedIn,
   isAdmin: isAdmin,
   userId: userId,
