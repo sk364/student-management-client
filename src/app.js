@@ -35,7 +35,9 @@ class App extends Component {
   render() {
     return(
       <div>
-        <NavHeader />
+        { !this.checkIfLoginPageURL(this.props.history.location.pathname) &&
+          <NavHeader />
+        }
         {this.props.children}
       </div>
     );
