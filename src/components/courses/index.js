@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import Config from 'react-global-configuration';
 import {fetchWithHeaders} from '../../helper';
-import { Button, ListGroup, ListGroupItem, Glyphicon, Modal, Checkbox, FormGroup, ControlLabel } from 'react-bootstrap';
+import { Button, ListGroup, ListGroupItem, Glyphicon, Modal, Checkbox, FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import Users from '../users';
 
 class Courses extends Component {
@@ -9,7 +9,9 @@ class Courses extends Component {
     super(props);
     this.state = {
       courses: [],
-      users: []
+      users: [],
+      showAddCourseModal: false,
+      newCourseName: '',
     };
   }
 
@@ -107,7 +109,41 @@ class Courses extends Component {
     this.setState({courses: courses});
   }
 
+  /**
+   * @desc Toggles {state.showAddCourseModal}
+   *
+   */
+  toggleAddCourseModal = () => {
+    this.setState({showAddCourseModal: !this.state.showAddCourseModal});
+  }
+
+  /**
+   * @desc Handles input change
+   *
+   */
+  handleInputChange = (event) => {
+    this.setState({
+      [event.target.id]: event.target.value
+    });
+  }
+
+  /**
+   * @desc Create new course with name {state.newCourseName}
+   *
+   */
+  addCourse = () => {
+    var formData = JSON.stringify({'name': this.state.newCourseName});
+
+    fetchWithHeaders('/courses/', 'POST', null, formData).then((response) => {
+      var courses = this.state.courses.slice();
+      courses.push(response);
+      this.setState({courses: courses});
+      this.toggleAddCourseModal();
+    });
+  }
+
   render = () => {
+    const isAdmin = Config.get('isAdmin');
     const coursesListGroupItems = this.state.courses.map((course, index) => {
       return(
         <CourseItem
@@ -121,11 +157,51 @@ class Courses extends Component {
       );
     });
 
+    const subHeaderStyle = {margin: '5px auto'};
+
     return(
       <div className="course-list">
+        <div style={subHeaderStyle}>
+          <div style={{display: 'inline'}}><strong>Courses</strong></div>
+          {
+            isAdmin &&
+            <Button
+              bsStyle="primary"
+              bsSize="xs"
+              className="pull-right"
+              onClick={this.toggleAddCourseModal}
+              >
+              Add Course
+            </Button>
+          }
+        </div>
         <ListGroup>
           { coursesListGroupItems }
         </ListGroup>
+
+        <Modal show={this.state.showAddCourseModal} onHide={this.toggleAddCourseModal}>
+          <Modal.Header>Add Course</Modal.Header>
+          <Modal.Body>
+            <FormGroup controlId="newCourseName">
+              <ControlLabel>Course Name</ControlLabel>
+              <FormControl
+                autoFocus
+                type="text"
+                value={this.state.newCourseName}
+                onChange={this.handleInputChange} />
+            </FormGroup>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={this.toggleAddCourseModal}>Close</Button>
+            <Button
+              bsStyle="primary"
+              disabled={this.state.newCourseName.length === 0}
+              onClick={this.addCourse}>
+              Save
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
         { coursesListGroupItems.length === 0 && <center><strong>Enjoy your freedom. No courses!</strong></center> }
       </div>
     );
